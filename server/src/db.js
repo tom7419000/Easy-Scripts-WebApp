@@ -13,7 +13,7 @@ export const DEFAULT_SETTINGS = {
     defaultTheme: 'dark' // dark | light
   },
   layout: {
-    columns: 'auto',     // auto | 1 | 2 | 3 | 4
+    columns: '2',        // auto | 1 | 2 | 3 | 4  (2 = voller curl-Befehl sichtbar)
     cardStyle: 'comfortable', // comfortable | compact
     showDownloads: true,
     showVersion: true,

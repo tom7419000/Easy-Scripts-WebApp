@@ -261,8 +261,8 @@ export function createAdminRouter({ db, config, scriptService, nginxManager, ses
 
     if (body.publicUrl !== undefined) {
       const url = String(body.publicUrl).trim().replace(/\/+$/, '');
-      if (url && !/^https?:\/\/[\w.:-]+$/.test(url)) {
-        throw new UserError('Öffentliche URL muss mit http(s):// beginnen (ohne Pfad).');
+      if (url && !/^https?:\/\/[a-z0-9]([a-z0-9.-]*[a-z0-9])?(:\d{1,5})?$/i.test(url)) {
+        throw new UserError('Öffentliche URL: gültige Domain im Format http(s)://install.example.com (optional :Port, ohne Pfad) angeben.');
       }
       s.publicUrl = url;
     }

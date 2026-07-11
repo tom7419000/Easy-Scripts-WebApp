@@ -50,20 +50,49 @@ sonst `YYYY-MM-DD-<commit>` vergeben. End-User können Versionen pinnen:
 `SCRIPT_REFRESH_INTERVAL` Minuten (Default 60) neu von GitLab geladen. Fehler
 erscheinen auf der Übersichtsseite.
 
+## Script-Icons (Font Awesome)
+
+Im Bearbeiten-Dialog öffnet **„Icon wählen"** einen durchsuchbaren Picker mit
+374 kuratierten Font-Awesome-6-Icons (Infrastruktur, Entwicklung und Marken wie
+`fa-brands fa-docker`, `fa-brands fa-ubuntu`, `fa-solid fa-server`). Die Icons
+sind selbst gehostet – kein externes CDN, CSP bleibt strikt. Über das Feld
+„Eigener Wert" sind weiterhin Emojis oder Bild-URLs möglich. Ungültige
+Font-Awesome-Klassen werden serverseitig verworfen.
+
 ## Branding & Layout (Einstellungen)
 
 - **Titel/Beschreibung** erscheinen im Header, Hero und im Terminal-Landing-Script.
 - **Logo:** Bild-Upload (max. 300 KB, wird als data-URL gespeichert) oder Emoji.
-- **Farben:** Primär- und Akzentfarbe wirken auf Verläufe, Buttons, Badges.
+  Das Logo wird ohne Hintergrund-Box direkt im Header angezeigt (mit dezentem
+  Hover-Effekt) und automatisch als **Favicon** ausgeliefert (`/favicon.svg`,
+  skaliert verlustfrei auf 16/32/64 px; Änderungen greifen ohne weiteres Zutun).
+- **Farben:** Primär- und Akzentfarbe wirken auf Verläufe, Buttons, Badges und
+  das Standard-Favicon.
 - **Schriftart:** systemnahe Stacks (keine externen Font-CDNs → CSP-konform).
 - **Standard-Theme:** Dunkel/Hell; Besucher können jederzeit umschalten.
-- **Kachel-Layout:** Spaltenzahl (auto/1–4), kompakt/komfortabel, Hero-Bereich,
-  Version/Download-Anzeige ein-/ausblenden.
+- **Kachel-Layout:** Standard sind **2 Spalten** (Desktop/Tablet; mobil 1 Spalte),
+  damit curl-Befehle vollständig sichtbar sind. Alternativ auto/1/3/4 Spalten,
+  kompakt/komfortabel, Hero-Bereich, Version/Download-Anzeige ein-/ausblenden.
 - **Header-/Footer-Links, Footer-Text** frei konfigurierbar.
-- **Öffentliche Basis-URL:** überschreibt die automatisch erkannte Domain in den
-  angezeigten curl-Befehlen (wichtig hinter mehreren Proxies).
 
 Alle Änderungen erscheinen ohne Reload sofort auf der öffentlichen Seite (SSE).
+
+## Öffentliche Installations-URL (Domain statt IP)
+
+Unter **Einstellungen → Integration** lässt sich festlegen, welche Adresse in
+den generierten curl-Befehlen erscheint:
+
+1. Protokoll wählen (`https://` oder `http://` – z. B. `http://`, wenn ein
+   Cloudflare Tunnel intern unverschlüsselt an die App anbindet).
+2. Domain/Hostname eintragen, z. B. `install-dashboard.tomsattler.de`
+   (optional mit `:Port`). Die Eingabe wird client- und serverseitig validiert;
+   eine Live-Vorschau zeigt den resultierenden Befehl.
+3. Speichern – alle curl-Befehle (Webseite **und** Terminal-Landing-Script)
+   verwenden sofort die Domain.
+
+Fallback-Reihenfolge, wenn das Feld leer ist: Umgebungsvariable `PUBLIC_URL`
+(vollständige URL) → `INSTALLATION_DOMAIN` (nur Hostname, Standard-Protokoll
+`http://`) → automatisch die aufgerufene Adresse/IP.
 
 ## NGINX
 

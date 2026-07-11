@@ -1,5 +1,6 @@
 import express from 'express';
 import { renderIndexScript, curlCommand } from '../bash.js';
+import { renderFavicon } from '../favicon.js';
 
 const CLI_UA = /\b(curl|wget|libwww|httpie|fetch)\b/i;
 
@@ -94,6 +95,14 @@ export function createPublicRouter({ db, config, scriptService, events }) {
 
   router.get('/healthz', (req, res) => {
     res.json({ ok: true, uptime: process.uptime() });
+  });
+
+  // Favicon, generated from the branding logo (updates automatically when
+  // the admin changes the logo; short cache so changes show up quickly).
+  router.get(['/favicon.svg', '/favicon.ico'], (req, res) => {
+    const { type, body } = renderFavicon(db.data.settings.branding);
+    res.set('Cache-Control', 'public, max-age=300');
+    res.type(type).send(body);
   });
 
   return router;

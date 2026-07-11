@@ -4,13 +4,15 @@ import { api } from '../lib/api.js';
 import { applyBranding, applyTheme, initTheme } from '../lib/theme.js';
 import { useSSE } from '../lib/useSSE.js';
 import CopyButton from '../components/CopyButton.jsx';
+import ScriptIcon from '../components/ScriptIcon.jsx';
 
 function BrandLogo({ branding }) {
-  const logo = branding?.logo || '';
-  if (logo.startsWith('data:image/')) {
-    return <span className="brand-logo"><img src={logo} alt="" /></span>;
-  }
-  return <span className="brand-logo" aria-hidden="true">{logo || '🚀'}</span>;
+  const logo = branding?.logo || 'fa-solid fa-rocket';
+  return (
+    <span className="brand-logo" aria-hidden="true">
+      <ScriptIcon icon={logo} />
+    </span>
+  );
 }
 
 function ScriptTile({ script, layout, compact }) {
@@ -19,9 +21,7 @@ function ScriptTile({ script, layout, compact }) {
     <article className={`tile${compact ? ' compact' : ''}`}>
       <div className="row" style={{ flexWrap: 'nowrap', alignItems: 'flex-start' }}>
         <span className="tile-icon" aria-hidden="true">
-          {String(script.icon || '').startsWith('http') || String(script.icon || '').startsWith('data:')
-            ? <img src={script.icon} alt="" />
-            : (script.icon || '📦')}
+          <ScriptIcon icon={script.icon} />
         </span>
         <div className="grow" style={{ minWidth: 0 }}>
           <h3>{script.name}</h3>
@@ -45,7 +45,7 @@ function ScriptTile({ script, layout, compact }) {
       <div className="tile-meta stack" style={{ gap: 8, width: '100%' }}>
         <div className="codebox">
           <code>{script.curl}</code>
-          <CopyButton text={script.curl} />
+          <CopyButton text={script.curl} compact />
         </div>
         <button
           type="button"
@@ -204,7 +204,7 @@ export default function PublicPage() {
         ) : (
           <section
             className="tile-grid"
-            data-cols={layout.columns !== 'auto' ? layout.columns : undefined}
+            data-cols={layout.columns}
             aria-label="Verfügbare Installations-Scripts"
           >
             {filtered.map((s) => (

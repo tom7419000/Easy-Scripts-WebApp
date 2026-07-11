@@ -13,10 +13,13 @@ curl -fsSL https://install.example.com/install/docker | bash   # direkt
 ## Features
 
 **Öffentliche Seite**
-- Kachel-Dashboard mit allen aktiven Scripts (Design im Stil von guide-dashboard)
+- Kachel-Dashboard mit allen aktiven Scripts (2-Spalten-Grid auf Desktop/Tablet,
+  1 Spalte mobil – der volle curl-Befehl bleibt sichtbar)
 - Copy-to-Clipboard-curl-Befehl, Beschreibung, Version, Tags und SHA-256-Prüfsumme pro Script
+- Font Awesome 6 Icons pro Script (selbst gehostet, kein CDN – CSP-konform)
 - Suche, Dark-/Light-Mode, responsiv (Mobile/Tablet/Desktop), WCAG-orientiert
 - `curl https://domain | bash` zeigt eine interaktive Script-Auswahl im Terminal
+- Favicon wird automatisch aus dem Branding-Logo generiert
 - Live-Aktualisierung über Server-Sent Events
 
 **Admin-Panel** (`/admin`)
@@ -25,6 +28,12 @@ curl -fsSL https://install.example.com/install/docker | bash   # direkt
   (`install.sh`, `setup.sh`, …) automatisch, mit Datei-Vorschau vor dem Import
 - Script-Verwaltung: Metadaten (Name, Beschreibung, Version, Icon, Tags), Slug,
   Aktivieren/Deaktivieren, Reihenfolge, Löschen
+- Icon-Auswahl: durchsuchbarer Font-Awesome-Picker (374 kuratierte Icons,
+  z. B. `fa-server`, `fa-docker`) plus Emoji/Bild-URL als Alternative
+- Öffentliche Installations-URL: Domain/Hostname mit HTTP/HTTPS-Auswahl statt
+  Server-IP in den curl-Befehlen – ideal für Cloudflare-Tunnel-Setups
+  (Fallback-Reihenfolge: Admin-Einstellung → `PUBLIC_URL` →
+  `INSTALLATION_DOMAIN` → aufgerufene Adresse/IP)
 - Versionierung: jede Änderung aus GitLab wird als Version gecacht; ältere Versionen
   einsehbar, wiederherstellbar und per `…/install/slug@version` abrufbar
 - Auto-Update: Scripts werden periodisch von GitLab aktualisiert (konfigurierbar)
