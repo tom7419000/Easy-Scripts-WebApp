@@ -1,0 +1,21 @@
+{
+  "name": "easy-scripts-webapp",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Installation Script Manager – Install-Scripts per curl bereitstellen und über ein Admin-Dashboard verwalten",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.17"
+  },
+  "workspaces": [
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "dev": "node scripts/dev.js",
+    "build": "npm run build -w client",
+    "start": "npm run start -w server",
+    "test": "npm test -w server",
+    "setup": "npm install && npm run build"
+  }
+}

@@ -1,0 +1,23 @@
+[Unit]
+Description=Easy Scripts WebApp – Installation Script Manager
+After=network.target
+
+[Service]
+Type=simple
+User=easyscripts
+Group=easyscripts
+WorkingDirectory=/opt/easy-scripts
+EnvironmentFile=-/opt/easy-scripts/.env
+ExecStart=/usr/bin/node server/src/index.js
+Restart=on-failure
+RestartSec=3
+
+# Hardening
+NoNewPrivileges=false
+ProtectSystem=full
+ReadWritePaths=/opt/easy-scripts/data /etc/nginx/conf.d
+PrivateTmp=true
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target
