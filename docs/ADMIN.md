@@ -117,5 +117,49 @@ Zertifikatspfade eintragen und erneut anwenden.
 - **Dienststatus:** `systemctl status easy-scripts` · Logs: `journalctl -u easy-scripts -f`
 - **Backup:** Verzeichnis `data/` sichern (enthält DB, Script-Versionen, Secret).
   Ohne `data/.secret` (bzw. `SESSION_SECRET`) sind gespeicherte GitLab-Tokens unlesbar.
-- **Update der App:** `deploy/install.sh` erneut ausführen oder `git pull && npm install && npm run build && systemctl restart easy-scripts`.
+- **Update der App:** `sudo /opt/easy-scripts/deploy/update.sh` (siehe unten).
 - **Passwort ändern:** Einstellungen → Konto (meldet alle anderen Sessions ab).
+
+## Update
+
+Zum Aktualisieren auf den neuesten Stand – ohne Neuinstallation und ohne
+Datenverlust:
+
+```bash
+sudo /opt/easy-scripts/deploy/update.sh
+```
+
+Ablauf des Skripts:
+
+1. Prüft, ob überhaupt eine neue Version vorliegt (sonst Abbruch, außer `--force`).
+2. Legt ein Backup von `data/` und `.env` unter `data/../backups/` an
+   (die letzten 5 werden behalten) und merkt sich die aktuelle Version.
+3. Holt den neuesten Code (`git fetch` + `reset --hard`), installiert
+   Abhängigkeiten, baut das Frontend neu, erneuert die systemd-Unit und startet
+   den Dienst.
+4. Führt einen **Health-Check** gegen `/healthz` aus. Schlägt er fehl, wird
+   **automatisch auf die vorherige Version zurückgerollt** – die App bleibt lauffähig.
+
+`data/` und `.env` werden dabei nie überschrieben (sie sind aus der
+Versionsverwaltung ausgenommen).
+
+**Optionen:**
+
+| Option | Wirkung |
+|---|---|
+| `--force` | Neu bauen & neu starten, auch wenn keine neue Version vorliegt |
+| `--branch <name>` | Von einem anderen Branch aktualisieren (Standard: `main`) |
+| `--no-backup` | Kein Daten-Backup anlegen (die Vorversion wird trotzdem für Rollback gemerkt) |
+| `--rollback` | Manuell auf die zuletzt gesicherte Version zurückrollen |
+| `-h`, `--help` | Hilfe anzeigen |
+
+Sollte nach einem Update doch ein Problem auftreten, das der Health-Check nicht
+erkannt hat:
+
+```bash
+sudo /opt/easy-scripts/deploy/update.sh --rollback
+```
+
+Die Daten-Backups liegen als `backup-<Zeitstempel>.tar.gz` im Verzeichnis
+`backups/` und lassen sich bei Bedarf manuell entpacken
+(`tar xzf backups/backup-….tar.gz -C /opt/easy-scripts`).

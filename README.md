@@ -98,6 +98,22 @@ sudo certbot certonly --webroot -w /var/www/html -d install.example.com
 
 Danach im Admin-Panel HTTPS aktivieren und die Zertifikatspfade eintragen.
 
+### Update (ohne Neuinstallation)
+
+Eine bestehende Installation lässt sich jederzeit aktualisieren, ohne sie neu
+aufzusetzen – Daten (`data/`) und Konfiguration (`.env`) bleiben erhalten:
+
+```bash
+sudo /opt/easy-scripts/deploy/update.sh
+```
+
+Das Skript legt vor dem Update ein Backup an, holt den neuesten Stand, baut das
+Frontend neu, erneuert die systemd-Unit und startet den Dienst. Schlägt der
+anschließende Health-Check fehl, wird **automatisch auf die vorherige Version
+zurückgerollt**. Optionen: `--force` (neu bauen trotz gleichem Stand),
+`--branch <name>`, `--no-backup`, `--rollback` (manuell auf die zuletzt
+gesicherte Version zurück). Details in [docs/ADMIN.md](docs/ADMIN.md#update).
+
 ## Workflow
 
 1. Admin öffnet das Admin-Panel und meldet sich an
