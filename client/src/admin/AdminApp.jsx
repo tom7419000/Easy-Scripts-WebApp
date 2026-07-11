@@ -72,7 +72,7 @@ export default function AdminApp() {
       <div className="admin-shell">
         <aside className="admin-sidebar">
           <div className="brand">
-            <span className="brand-logo" aria-hidden="true">🚀</span>
+            <span className="brand-logo" aria-hidden="true"><i className="fa-solid fa-rocket" /></span>
             <span className="brand-title">Admin</span>
           </div>
           <nav className="stack" style={{ gap: 4 }} aria-label="Admin-Navigation">

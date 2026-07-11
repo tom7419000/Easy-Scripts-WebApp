@@ -1,6 +1,24 @@
 import { GitLabClient, parseGitLabUrl, detectInstallScripts, UserError } from './gitlab.js';
 import { sha256hex, encryptSecret, decryptSecret } from './crypto.js';
 
+const FA_CLASS_RE = /^fa-(solid|regular|brands) fa-[a-z0-9-]+$/;
+export const DEFAULT_ICON = 'fa-solid fa-box';
+
+/**
+ * Normalize a script icon: Font-Awesome classnames are strictly validated
+ * (they end up in a className attribute), everything else (emoji, image URL)
+ * is only length-limited.
+ */
+export function normalizeIcon(value, fallback = DEFAULT_ICON) {
+  const icon = String(value ?? '').trim().slice(0, 300);
+  if (!icon) return fallback;
+  if (icon.startsWith('fa-')) {
+    const compact = icon.replace(/\s+/g, ' ');
+    return FA_CLASS_RE.test(compact) ? compact : fallback;
+  }
+  return icon;
+}
+
 export function slugify(name) {
   const slug = String(name)
     .toLowerCase()
@@ -129,7 +147,7 @@ export class ScriptService {
       name: baseName,
       description: metadata.description ?? (project.description || ''),
       version,
-      icon: metadata.icon || '📦',
+      icon: normalizeIcon(metadata.icon),
       tags: Array.isArray(metadata.tags) ? metadata.tags.slice(0, 10) : [],
       active: Boolean(metadata.active),
       autoUpdate: metadata.autoUpdate !== false,
@@ -196,7 +214,7 @@ export class ScriptService {
       } else if (key === 'version') {
         script.version = String(patch.version).slice(0, 40);
       } else if (key === 'icon') {
-        script.icon = String(patch.icon).slice(0, 300);
+        script.icon = normalizeIcon(patch.icon, script.icon);
       } else {
         script[key] = Boolean(patch[key]);
       }

@@ -6,6 +6,8 @@ import { useToast } from '../components/Toast.jsx';
 import Modal from '../components/Modal.jsx';
 import Toggle from '../components/Toggle.jsx';
 import CopyButton from '../components/CopyButton.jsx';
+import ScriptIcon from '../components/ScriptIcon.jsx';
+import IconPicker from '../components/IconPicker.jsx';
 
 /* ---------------- Import wizard (GitLab URL -> candidates -> import) ---------------- */
 
@@ -275,10 +277,10 @@ function EditModal({ script, onClose, onSaved }) {
       )}
     >
       <form id="edit-form" className="stack" onSubmit={save}>
-        <div className="row" style={{ alignItems: 'flex-start' }}>
-          <div className="field" style={{ width: 90 }}>
-            <label htmlFor="icon">Icon</label>
-            <input id="icon" className="input" value={form.icon} onChange={set('icon')} placeholder="📦" />
+        <div className="row" style={{ alignItems: 'flex-end' }}>
+          <div className="field">
+            <span style={{ fontSize: '.85rem', fontWeight: 600, color: 'var(--text-dim)' }}>Icon</span>
+            <IconPicker value={form.icon} onChange={(icon) => setForm((f) => ({ ...f, icon }))} />
           </div>
           <div className="field grow">
             <label htmlFor="name">Name</label>
@@ -289,7 +291,6 @@ function EditModal({ script, onClose, onSaved }) {
             <input id="version" className="input" value={form.version} onChange={set('version')} />
           </div>
         </div>
-        <p className="hint" style={{ marginTop: -8 }}>Icon: Emoji oder Bild-URL (https://… / data:image/…).</p>
 
         <div className="field">
           <label htmlFor="slug">Slug <span className="faint">(URL-Name)</span></label>
@@ -465,7 +466,7 @@ export default function ScriptsPage() {
                 <button type="button" className="btn btn-ghost btn-sm btn-icon" aria-label={`${s.name} nach unten`} disabled={i === scripts.length - 1} onClick={() => move(i, 1)}>▼</button>
               </div>
               <span className="tile-icon" aria-hidden="true">
-                {s.icon?.startsWith('http') || s.icon?.startsWith('data:') ? <img src={s.icon} alt="" /> : s.icon}
+                <ScriptIcon icon={s.icon} />
               </span>
               <div className="info">
                 <div className="name">

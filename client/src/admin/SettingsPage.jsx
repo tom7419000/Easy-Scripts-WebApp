@@ -39,15 +39,28 @@ function LinksEditor({ links, onChange, idPrefix }) {
   );
 }
 
+const DOMAIN_RE = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*(:\d{1,5})?$/i;
+
+/** Split a stored public URL into protocol + host for the settings form. */
+function splitPublicUrl(publicUrl) {
+  const m = /^(https?):\/\/(.+)$/.exec(publicUrl || '');
+  return m ? { proto: m[1], domain: m[2] } : { proto: 'https', domain: '' };
+}
+
 export default function SettingsPage() {
   const toast = useToast();
   const [settings, setSettings] = useState(null);
   const [gitlabToken, setGitlabToken] = useState('');
   const [busy, setBusy] = useState(false);
   const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '' });
+  const [publicHost, setPublicHost] = useState({ proto: 'https', domain: '' });
+  const [domainError, setDomainError] = useState(null);
 
   useEffect(() => {
-    api.get('/api/admin/settings').then(setSettings).catch(() => {});
+    api.get('/api/admin/settings').then((s) => {
+      setSettings(s);
+      setPublicHost(splitPublicUrl(s.publicUrl));
+    }).catch(() => {});
   }, []);
 
   if (!settings) {
@@ -71,6 +84,13 @@ export default function SettingsPage() {
 
   const save = async (e) => {
     e.preventDefault();
+    const domain = publicHost.domain.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/+$/, '');
+    if (domain && !DOMAIN_RE.test(domain)) {
+      setDomainError('Ungültiges Format – erwartet z. B. install-dashboard.tomsattler.de (optional mit :Port).');
+      toast('Bitte die Domain-Eingabe korrigieren.', 'err');
+      return;
+    }
+    setDomainError(null);
     setBusy(true);
     try {
       const payload = {
@@ -78,7 +98,7 @@ export default function SettingsPage() {
         layout: settings.layout,
         header: settings.header,
         footer: settings.footer,
-        publicUrl: settings.publicUrl,
+        publicUrl: domain ? `${publicHost.proto}://${domain}` : '',
       };
       if (gitlabToken.trim() || gitlabToken === '') {
         // only send when admin typed something (empty string clears)
@@ -86,6 +106,7 @@ export default function SettingsPage() {
       }
       const updated = await api.put('/api/admin/settings', payload);
       setSettings(updated);
+      setPublicHost(splitPublicUrl(updated.publicUrl));
       applyBranding(updated.branding);
       toast('Einstellungen gespeichert.');
     } catch (err) {
@@ -251,9 +272,32 @@ export default function SettingsPage() {
         <section className="card card-pad stack">
           <h3>Integration</h3>
           <div className="field">
-            <label htmlFor="public-url">Öffentliche Basis-URL</label>
-            <input id="public-url" className="input" placeholder="https://install.example.com" value={settings.publicUrl} onChange={(e) => setSettings((s) => ({ ...s, publicUrl: e.target.value }))} />
-            <p className="hint">Wird in curl-Befehlen angezeigt. Leer lassen, um die aufgerufene Domain automatisch zu verwenden.</p>
+            <label htmlFor="public-domain">Öffentliche Installations-URL (Domain / Hostname)</label>
+            <div className="row" style={{ flexWrap: 'nowrap' }}>
+              <select
+                className="select" style={{ maxWidth: 110 }} value={publicHost.proto}
+                aria-label="Protokoll"
+                onChange={(e) => setPublicHost((p) => ({ ...p, proto: e.target.value }))}
+              >
+                <option value="https">https://</option>
+                <option value="http">http://</option>
+              </select>
+              <input
+                id="public-domain" className="input" placeholder="install-dashboard.tomsattler.de"
+                value={publicHost.domain}
+                aria-invalid={Boolean(domainError)}
+                onChange={(e) => { setPublicHost((p) => ({ ...p, domain: e.target.value })); setDomainError(null); }}
+              />
+            </div>
+            {domainError && <p className="error-text" role="alert">{domainError}</p>}
+            <p className="hint">
+              ℹ️ Diese Domain wird in den generierten curl-Befehlen verwendet – ideal für Cloudflare
+              Tunnel (Protokoll „http://" wählen, wenn der Tunnel intern unverschlüsselt anbindet).
+              Leer lassen → die aufgerufene Adresse/IP wird automatisch verwendet.
+              {publicHost.domain && DOMAIN_RE.test(publicHost.domain.trim()) && (
+                <> Vorschau: <code>curl -fsSL {publicHost.proto}://{publicHost.domain.trim()}/install/&lt;script&gt; | bash</code></>
+              )}
+            </p>
           </div>
           <div className="field">
             <label htmlFor="gitlab-default-token">

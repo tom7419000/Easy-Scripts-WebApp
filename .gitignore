@@ -7,6 +7,9 @@ client/dist/
 # Runtime data (scripts, sessions, settings, secrets)
 data/
 
+# Update-Backups (auf dem Server durch deploy/update.sh erzeugt)
+backups/
+
 # Environment
 .env
 .env.local

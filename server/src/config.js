@@ -37,13 +37,23 @@ export function loadConfig(env = process.env) {
     }
   }
 
+  // Public base URL for generated curl commands. Priority:
+  // PUBLIC_URL (full URL) > INSTALLATION_DOMAIN (bare hostname, defaults to
+  // http:// for Cloudflare-Tunnel setups). The admin-panel setting overrides
+  // both at runtime; without any of these the requested host/IP is used.
+  let publicUrl = (env.PUBLIC_URL || '').replace(/\/+$/, '');
+  if (!publicUrl && env.INSTALLATION_DOMAIN) {
+    const domain = env.INSTALLATION_DOMAIN.trim().replace(/\/+$/, '');
+    publicUrl = /^https?:\/\//.test(domain) ? domain : `http://${domain}`;
+  }
+
   return {
     rootDir,
     dataDir,
     clientDist: path.join(rootDir, 'client', 'dist'),
     host: env.HOST || '127.0.0.1',
     port: int(env.PORT, 3001),
-    publicUrl: (env.PUBLIC_URL || '').replace(/\/+$/, ''),
+    publicUrl,
     trustProxy: bool(env.TRUST_PROXY, true),
     sessionSecret,
     sessionTtlMs: int(env.SESSION_TTL_HOURS, 24 * 7) * 3600 * 1000,

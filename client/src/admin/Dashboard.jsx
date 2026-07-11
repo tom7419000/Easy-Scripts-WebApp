@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api.js';
 import { useSSE } from '../lib/useSSE.js';
+import ScriptIcon from '../components/ScriptIcon.jsx';
 
 export default function Dashboard() {
   const [stats, setStats] = useState(null);
@@ -79,7 +80,7 @@ export default function Dashboard() {
           </p>
         ) : recent.map((s) => (
           <div className="script-row" key={s.id}>
-            <span className="tile-icon" aria-hidden="true">{s.icon?.startsWith('http') || s.icon?.startsWith('data:') ? <img src={s.icon} alt="" /> : s.icon}</span>
+            <span className="tile-icon" aria-hidden="true"><ScriptIcon icon={s.icon} /></span>
             <div className="info">
               <div className="name">{s.name} <span className="badge badge-accent">v{s.version}</span></div>
               <div className="sub">{s.source.projectPath} · {s.downloads} Installationen</div>

@@ -9,6 +9,8 @@ export default defineConfig({
       '/api': 'http://127.0.0.1:3001',
       '/install': 'http://127.0.0.1:3001',
       '/healthz': 'http://127.0.0.1:3001',
+      '/favicon.svg': 'http://127.0.0.1:3001',
+      '/favicon.ico': 'http://127.0.0.1:3001',
     },
   },
   build: {

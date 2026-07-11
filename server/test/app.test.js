@@ -277,6 +277,51 @@ test('gitlab default token is stored encrypted and never echoed', async () => {
   assert.ok(!onDisk.includes('glpat-super-geheim'), 'token must not be stored in plaintext');
 });
 
+test('favicon is generated from the branding logo', async () => {
+  let res = await realFetch(baseUrl + '/favicon.svg');
+  assert.equal(res.status, 200);
+  assert.match(res.headers.get('content-type'), /image\/svg\+xml/);
+  assert.ok((await res.text()).includes('<svg'));
+
+  // logo change is reflected immediately
+  await call('PUT', '/api/admin/settings', { branding: { logo: '🐳' } });
+  res = await realFetch(baseUrl + '/favicon.ico');
+  assert.ok((await res.text()).includes('🐳'));
+  await call('PUT', '/api/admin/settings', { branding: { logo: '' } });
+});
+
+test('configured domain replaces the IP in all curl commands', async () => {
+  // invalid domain formats are rejected with a clear error
+  let res = await call('PUT', '/api/admin/settings', { publicUrl: 'https://not a domain' });
+  assert.equal(res.status, 400);
+  res = await call('PUT', '/api/admin/settings', { publicUrl: 'ftp://x.example.com' });
+  assert.equal(res.status, 400);
+
+  res = await call('PUT', '/api/admin/settings', { publicUrl: 'https://install-dashboard.example.com' });
+  assert.equal(res.status, 200);
+
+  const list = await call('GET', '/api/public/scripts');
+  assert.equal(list.data[0].curl, `curl -fsSL https://install-dashboard.example.com/install/${scriptSlug} | bash`);
+
+  const index = await realFetch(baseUrl + '/', { headers: { 'user-agent': 'curl/8' } });
+  const body = await index.text();
+  assert.ok(body.includes("BASE_URL='https://install-dashboard.example.com'"));
+  assert.ok(!body.includes('127.0.0.1'), 'IP must not appear once a domain is configured');
+
+  // clearing the domain falls back to the requested host (IP)
+  res = await call('PUT', '/api/admin/settings', { publicUrl: '' });
+  assert.equal(res.status, 200);
+  const list2 = await call('GET', '/api/public/scripts');
+  assert.match(list2.data[0].curl, /^curl -fsSL http:\/\/127\.0\.0\.1:\d+\/install\//);
+});
+
+test('fa icon classnames are validated on update', async () => {
+  let res = await call('PATCH', `/api/admin/scripts/${scriptId}`, { icon: 'fa-brands fa-docker' });
+  assert.equal(res.data.icon, 'fa-brands fa-docker');
+  res = await call('PATCH', `/api/admin/scripts/${scriptId}`, { icon: 'fa-solid fa-x" onmouseover="alert(1)' });
+  assert.equal(res.data.icon, 'fa-brands fa-docker', 'invalid fa value must keep previous icon');
+});
+
 test('wrong login is rejected and rate limit eventually kicks in', async () => {
   const fresh = await realFetch(baseUrl + '/api/admin/login', {
     method: 'POST',

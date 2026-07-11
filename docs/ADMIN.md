@@ -50,20 +50,49 @@ sonst `YYYY-MM-DD-<commit>` vergeben. End-User können Versionen pinnen:
 `SCRIPT_REFRESH_INTERVAL` Minuten (Default 60) neu von GitLab geladen. Fehler
 erscheinen auf der Übersichtsseite.
 
+## Script-Icons (Font Awesome)
+
+Im Bearbeiten-Dialog öffnet **„Icon wählen"** einen durchsuchbaren Picker mit
+374 kuratierten Font-Awesome-6-Icons (Infrastruktur, Entwicklung und Marken wie
+`fa-brands fa-docker`, `fa-brands fa-ubuntu`, `fa-solid fa-server`). Die Icons
+sind selbst gehostet – kein externes CDN, CSP bleibt strikt. Über das Feld
+„Eigener Wert" sind weiterhin Emojis oder Bild-URLs möglich. Ungültige
+Font-Awesome-Klassen werden serverseitig verworfen.
+
 ## Branding & Layout (Einstellungen)
 
 - **Titel/Beschreibung** erscheinen im Header, Hero und im Terminal-Landing-Script.
 - **Logo:** Bild-Upload (max. 300 KB, wird als data-URL gespeichert) oder Emoji.
-- **Farben:** Primär- und Akzentfarbe wirken auf Verläufe, Buttons, Badges.
+  Das Logo wird ohne Hintergrund-Box direkt im Header angezeigt (mit dezentem
+  Hover-Effekt) und automatisch als **Favicon** ausgeliefert (`/favicon.svg`,
+  skaliert verlustfrei auf 16/32/64 px; Änderungen greifen ohne weiteres Zutun).
+- **Farben:** Primär- und Akzentfarbe wirken auf Verläufe, Buttons, Badges und
+  das Standard-Favicon.
 - **Schriftart:** systemnahe Stacks (keine externen Font-CDNs → CSP-konform).
 - **Standard-Theme:** Dunkel/Hell; Besucher können jederzeit umschalten.
-- **Kachel-Layout:** Spaltenzahl (auto/1–4), kompakt/komfortabel, Hero-Bereich,
-  Version/Download-Anzeige ein-/ausblenden.
+- **Kachel-Layout:** Standard sind **2 Spalten** (Desktop/Tablet; mobil 1 Spalte),
+  damit curl-Befehle vollständig sichtbar sind. Alternativ auto/1/3/4 Spalten,
+  kompakt/komfortabel, Hero-Bereich, Version/Download-Anzeige ein-/ausblenden.
 - **Header-/Footer-Links, Footer-Text** frei konfigurierbar.
-- **Öffentliche Basis-URL:** überschreibt die automatisch erkannte Domain in den
-  angezeigten curl-Befehlen (wichtig hinter mehreren Proxies).
 
 Alle Änderungen erscheinen ohne Reload sofort auf der öffentlichen Seite (SSE).
+
+## Öffentliche Installations-URL (Domain statt IP)
+
+Unter **Einstellungen → Integration** lässt sich festlegen, welche Adresse in
+den generierten curl-Befehlen erscheint:
+
+1. Protokoll wählen (`https://` oder `http://` – z. B. `http://`, wenn ein
+   Cloudflare Tunnel intern unverschlüsselt an die App anbindet).
+2. Domain/Hostname eintragen, z. B. `install-dashboard.tomsattler.de`
+   (optional mit `:Port`). Die Eingabe wird client- und serverseitig validiert;
+   eine Live-Vorschau zeigt den resultierenden Befehl.
+3. Speichern – alle curl-Befehle (Webseite **und** Terminal-Landing-Script)
+   verwenden sofort die Domain.
+
+Fallback-Reihenfolge, wenn das Feld leer ist: Umgebungsvariable `PUBLIC_URL`
+(vollständige URL) → `INSTALLATION_DOMAIN` (nur Hostname, Standard-Protokoll
+`http://`) → automatisch die aufgerufene Adresse/IP.
 
 ## NGINX
 
@@ -88,5 +117,49 @@ Zertifikatspfade eintragen und erneut anwenden.
 - **Dienststatus:** `systemctl status easy-scripts` · Logs: `journalctl -u easy-scripts -f`
 - **Backup:** Verzeichnis `data/` sichern (enthält DB, Script-Versionen, Secret).
   Ohne `data/.secret` (bzw. `SESSION_SECRET`) sind gespeicherte GitLab-Tokens unlesbar.
-- **Update der App:** `deploy/install.sh` erneut ausführen oder `git pull && npm install && npm run build && systemctl restart easy-scripts`.
+- **Update der App:** `sudo /opt/easy-scripts/deploy/update.sh` (siehe unten).
 - **Passwort ändern:** Einstellungen → Konto (meldet alle anderen Sessions ab).
+
+## Update
+
+Zum Aktualisieren auf den neuesten Stand – ohne Neuinstallation und ohne
+Datenverlust:
+
+```bash
+sudo /opt/easy-scripts/deploy/update.sh
+```
+
+Ablauf des Skripts:
+
+1. Prüft, ob überhaupt eine neue Version vorliegt (sonst Abbruch, außer `--force`).
+2. Legt ein Backup von `data/` und `.env` unter `data/../backups/` an
+   (die letzten 5 werden behalten) und merkt sich die aktuelle Version.
+3. Holt den neuesten Code (`git fetch` + `reset --hard`), installiert
+   Abhängigkeiten, baut das Frontend neu, erneuert die systemd-Unit und startet
+   den Dienst.
+4. Führt einen **Health-Check** gegen `/healthz` aus. Schlägt er fehl, wird
+   **automatisch auf die vorherige Version zurückgerollt** – die App bleibt lauffähig.
+
+`data/` und `.env` werden dabei nie überschrieben (sie sind aus der
+Versionsverwaltung ausgenommen).
+
+**Optionen:**
+
+| Option | Wirkung |
+|---|---|
+| `--force` | Neu bauen & neu starten, auch wenn keine neue Version vorliegt |
+| `--branch <name>` | Von einem anderen Branch aktualisieren (Standard: `main`) |
+| `--no-backup` | Kein Daten-Backup anlegen (die Vorversion wird trotzdem für Rollback gemerkt) |
+| `--rollback` | Manuell auf die zuletzt gesicherte Version zurückrollen |
+| `-h`, `--help` | Hilfe anzeigen |
+
+Sollte nach einem Update doch ein Problem auftreten, das der Health-Check nicht
+erkannt hat:
+
+```bash
+sudo /opt/easy-scripts/deploy/update.sh --rollback
+```
+
+Die Daten-Backups liegen als `backup-<Zeitstempel>.tar.gz` im Verzeichnis
+`backups/` und lassen sich bei Bedarf manuell entpacken
+(`tar xzf backups/backup-….tar.gz -C /opt/easy-scripts`).
